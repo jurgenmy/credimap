@@ -1,0 +1,125 @@
+{
+  "Version": 1,
+  "Hash": "lHdb4xBOCXlpakjUV+BEcX8RkOicNvKxMhX817rrr/0=",
+  "Source": "Credimap",
+  "BasePath": "_content/Credimap",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "Credimap\\wwwroot",
+      "Source": "Credimap",
+      "ContentRoot": "C:\\Users\\jm857368\\Documents\\credimap\\Credimap\\wwwroot\\",
+      "BasePath": "_content/Credimap",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "C:\\Users\\jm857368\\Documents\\credimap\\Credimap\\wwwroot\\index.html",
+      "SourceId": "Credimap",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\jm857368\\Documents\\credimap\\Credimap\\wwwroot\\",
+      "BasePath": "_content/Credimap",
+      "RelativePath": "index#[.{fingerprint}]?.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "6bfv73egjt",
+      "Integrity": "QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\index.html"
+    }
+  ],
+  "Endpoints": [
+    {
+      "Route": "index.6bfv73egjt.html",
+      "AssetFile": "C:\\Users\\jm857368\\Documents\\credimap\\Credimap\\wwwroot\\index.html",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "4434"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Thu, 02 Oct 2025 15:26:07 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "6bfv73egjt"
+        },
+        {
+          "Name": "label",
+          "Value": "index.html"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU="
+        }
+      ]
+    },
+    {
+      "Route": "index.html",
+      "AssetFile": "C:\\Users\\jm857368\\Documents\\credimap\\Credimap\\wwwroot\\index.html",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "4434"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Thu, 02 Oct 2025 15:26:07 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU="
+        }
+      ]
+    }
+  ]
+}
