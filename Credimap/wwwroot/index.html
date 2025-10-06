@@ -6,7 +6,6 @@
 	<title>Credimap - Sucursales y Ubicaciones</title>
 	<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
 	<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js" integrity="sha512-+uNw7sQ2mI8Qk9uJ5xQmQ8J1qjZr+uEwC1sR0pV8pZP8ZyIY0Yf8C0bR9mR1jz4o3mYw+YQ4mV5b3s8m0Wm9fA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<style>
 		html, body { height: 100%; margin: 0; }
 		#map { position: absolute; top: 0; bottom: 0; width: 100%; }
@@ -19,7 +18,7 @@
 	<div id="map"></div>
 	<div id="notice" class="notice" style="display:none"></div>
 	<script>
-		// === Configurable Mapbox token ===
+		// === Mapbox token (configurable) ===
 		mapboxgl.accessToken = 'pk.eyJ1IjoianVyZ2VubSIsImEiOiJjbWc5a3A0aDIwOTdwMmpxMXk5OXpqOGxhIn0.M9o_AhZuvPoniMEhYphhZg';
 
 		const map = new mapboxgl.Map({
@@ -29,15 +28,12 @@
 			zoom: 11
 		});
 
-		// Keep markers for sucursales and users
 		const sucursalMarkers = [];
-		const userMarkers = new Map(); // userId -> marker
-
 		const noticeEl = document.getElementById('notice');
 		function showNotice(msg) {
 			noticeEl.textContent = msg;
 			noticeEl.style.display = 'block';
-			setTimeout(() => noticeEl.style.display = 'none', 5000);
+			setTimeout(() => noticeEl.style.display = 'none', 6000);
 		}
 
 		// Load sucursales markers
@@ -61,54 +57,42 @@
 			})
 			.catch(() => showNotice('No se pudo cargar /api/sucursales'));
 
-		// SignalR connection
-		const userId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-		const connection = new signalR.HubConnectionBuilder()
-			.withUrl('/hubs/location')
-			.withAutomaticReconnect()
-			.build();
-
-		connection.on('ReceiveLocationUpdate', ({ userId: otherId, lat, lng }) => {
-			if (!otherId) return;
-			let marker = userMarkers.get(otherId);
-			if (!marker) {
-				const el = document.createElement('div');
-				el.style.width = '14px';
-				el.style.height = '14px';
-				el.style.borderRadius = '50%';
-				el.style.background = '#ef4444'; // red for others
-				el.style.boxShadow = '0 0 0 2px white';
-				marker = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map);
-				userMarkers.set(otherId, marker);
-			} else {
-				marker.setLngLat([lng, lat]);
-			}
-		});
-
-		connection.start().catch(err => console.error(err));
-
-		// Geolocation: allow on any protocol as requested
+		// Geolocalización del promotor (cliente)
 		let selfMarker = null;
+		let lastUpdateTs = 0;
+		const MIN_UPDATE_MS = 2000; // throttle updates
+
+		function upsertSelfMarker(lng, lat) {
+			if (!selfMarker) {
+				const el = document.createElement('div');
+				el.style.width = '16px';
+				el.style.height = '16px';
+				el.style.borderRadius = '50%';
+				el.style.background = '#10b981'; // verde: ubicación propia
+				el.style.boxShadow = '0 0 0 2px white';
+				selfMarker = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map);
+			} else {
+				selfMarker.setLngLat([lng, lat]);
+			}
+		}
+
 		if (navigator.geolocation) {
-			navigator.geolocation.watchPosition(pos => {
-				const { latitude, longitude } = pos.coords;
-				if (!selfMarker) {
-					const el = document.createElement('div');
-					el.style.width = '16px';
-					el.style.height = '16px';
-					el.style.borderRadius = '50%';
-					el.style.background = '#10b981'; // green for self
-					el.style.boxShadow = '0 0 0 2px white';
-					selfMarker = new mapboxgl.Marker(el).setLngLat([longitude, latitude]).addTo(map);
+			navigator.geolocation.watchPosition(position => {
+				const now = Date.now();
+				if (now - lastUpdateTs < MIN_UPDATE_MS) return;
+				lastUpdateTs = now;
+				const { latitude, longitude } = position.coords;
+				upsertSelfMarker(longitude, latitude);
+			}, error => {
+				if (error.code === error.PERMISSION_DENIED) {
+					showNotice('Necesitamos permiso de geolocalización para mostrar tu ubicación.');
+				} else if (error.code === error.POSITION_UNAVAILABLE) {
+					showNotice('Ubicación no disponible. Verifica tu GPS/servicios de ubicación.');
+				} else if (error.code === error.TIMEOUT) {
+					showNotice('Tiempo de espera agotado al obtener ubicación.');
 				} else {
-					selfMarker.setLngLat([longitude, latitude]);
+					showNotice('Error de geolocalización.');
 				}
-				// send to server
-				if (connection.state === signalR.HubConnectionState.Connected) {
-					connection.invoke('SendLocation', userId, latitude, longitude).catch(() => {});
-				}
-			}, err => {
-				showNotice('Geolocalización no disponible: ' + err.message);
 			}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 });
 		} else {
 			showNotice('Geolocalización no soportada por este navegador.');

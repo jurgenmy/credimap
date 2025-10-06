@@ -1,0 +1,16 @@
+{
+	"name": "credimap",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Servidor Express para Credimap (sirve wwwroot y /api/sucursales)",
+	"scripts": {
+		"start": "node server.js",
+		"tunnel": "lt --port 5000"
+	},
+	"dependencies": {
+		"express": "^4.19.2"
+	},
+	"devDependencies": {
+		"localtunnel": "^2.0.2"
+	}
+}
