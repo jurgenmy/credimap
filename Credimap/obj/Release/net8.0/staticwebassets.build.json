@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "lHdb4xBOCXlpakjUV+BEcX8RkOicNvKxMhX817rrr/0=",
+  "Hash": "9k42GjE/D3kxdEbG5S5NdV8n4gHKHCxpqQ2qIKWCZeY=",
   "Source": "Credimap",
   "BasePath": "_content/Credimap",
   "Mode": "Default",
@@ -31,59 +31,14 @@
       "RelatedAsset": "",
       "AssetTraitName": "",
       "AssetTraitValue": "",
-      "Fingerprint": "6bfv73egjt",
-      "Integrity": "QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU=",
+      "Fingerprint": "nay9wdxlhl",
+      "Integrity": "39kWi++B3mIkNN5gVThUQH6d1+fnhaRhA2xdON5CNLE=",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\index.html"
     }
   ],
   "Endpoints": [
-    {
-      "Route": "index.6bfv73egjt.html",
-      "AssetFile": "C:\\Users\\jm857368\\Documents\\credimap\\Credimap\\wwwroot\\index.html",
-      "Selectors": [],
-      "ResponseHeaders": [
-        {
-          "Name": "Accept-Ranges",
-          "Value": "bytes"
-        },
-        {
-          "Name": "Content-Length",
-          "Value": "4434"
-        },
-        {
-          "Name": "Content-Type",
-          "Value": "text/html"
-        },
-        {
-          "Name": "ETag",
-          "Value": "\"QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU=\""
-        },
-        {
-          "Name": "Last-Modified",
-          "Value": "Thu, 02 Oct 2025 15:26:07 GMT"
-        },
-        {
-          "Name": "Cache-Control",
-          "Value": "max-age=31536000, immutable"
-        }
-      ],
-      "EndpointProperties": [
-        {
-          "Name": "fingerprint",
-          "Value": "6bfv73egjt"
-        },
-        {
-          "Name": "label",
-          "Value": "index.html"
-        },
-        {
-          "Name": "integrity",
-          "Value": "sha256-QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU="
-        }
-      ]
-    },
     {
       "Route": "index.html",
       "AssetFile": "C:\\Users\\jm857368\\Documents\\credimap\\Credimap\\wwwroot\\index.html",
@@ -95,7 +50,7 @@
         },
         {
           "Name": "Content-Length",
-          "Value": "4434"
+          "Value": "4608"
         },
         {
           "Name": "Content-Type",
@@ -103,11 +58,11 @@
         },
         {
           "Name": "ETag",
-          "Value": "\"QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU=\""
+          "Value": "\"39kWi++B3mIkNN5gVThUQH6d1+fnhaRhA2xdON5CNLE=\""
         },
         {
           "Name": "Last-Modified",
-          "Value": "Thu, 02 Oct 2025 15:26:07 GMT"
+          "Value": "Fri, 03 Oct 2025 18:24:53 GMT"
         },
         {
           "Name": "Cache-Control",
@@ -117,7 +72,52 @@
       "EndpointProperties": [
         {
           "Name": "integrity",
-          "Value": "sha256-QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU="
+          "Value": "sha256-39kWi++B3mIkNN5gVThUQH6d1+fnhaRhA2xdON5CNLE="
+        }
+      ]
+    },
+    {
+      "Route": "index.nay9wdxlhl.html",
+      "AssetFile": "C:\\Users\\jm857368\\Documents\\credimap\\Credimap\\wwwroot\\index.html",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "4608"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"39kWi++B3mIkNN5gVThUQH6d1+fnhaRhA2xdON5CNLE=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Fri, 03 Oct 2025 18:24:53 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "nay9wdxlhl"
+        },
+        {
+          "Name": "label",
+          "Value": "index.html"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-39kWi++B3mIkNN5gVThUQH6d1+fnhaRhA2xdON5CNLE="
         }
       ]
     }

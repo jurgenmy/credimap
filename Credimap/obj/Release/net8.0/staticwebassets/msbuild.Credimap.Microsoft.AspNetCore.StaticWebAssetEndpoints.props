@@ -1,16 +1,16 @@
 ﻿<Project>
   <ItemGroup>
-    <StaticWebAssetEndpoint Include="_content/Credimap/index.6bfv73egjt.html">
-      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\index.html'))</AssetFile>
-      <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"6bfv73egjt"},{"Name":"integrity","Value":"sha256-QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU="},{"Name":"label","Value":"_content/Credimap/index.html"}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"4434"},{"Name":"Content-Type","Value":"text/html"},{"Name":"ETag","Value":"\u0022QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU=\u0022"},{"Name":"Last-Modified","Value":"Thu, 02 Oct 2025 15:26:07 GMT"}]]]></ResponseHeaders>
-    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/Credimap/index.html">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\index.html'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>
-      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU="}]]]></EndpointProperties>
-      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"4434"},{"Name":"Content-Type","Value":"text/html"},{"Name":"ETag","Value":"\u0022QpInUApRqOsYbSxOhzVJvdMKmrPQjyQeW8JZpTVluGU=\u0022"},{"Name":"Last-Modified","Value":"Thu, 02 Oct 2025 15:26:07 GMT"}]]]></ResponseHeaders>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-39kWi\u002B\u002BB3mIkNN5gVThUQH6d1\u002BfnhaRhA2xdON5CNLE="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"4608"},{"Name":"Content-Type","Value":"text/html"},{"Name":"ETag","Value":"\u002239kWi\u002B\u002BB3mIkNN5gVThUQH6d1\u002BfnhaRhA2xdON5CNLE=\u0022"},{"Name":"Last-Modified","Value":"Fri, 03 Oct 2025 18:24:53 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/Credimap/index.nay9wdxlhl.html">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\index.html'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"nay9wdxlhl"},{"Name":"integrity","Value":"sha256-39kWi\u002B\u002BB3mIkNN5gVThUQH6d1\u002BfnhaRhA2xdON5CNLE="},{"Name":"label","Value":"_content/Credimap/index.html"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"4608"},{"Name":"Content-Type","Value":"text/html"},{"Name":"ETag","Value":"\u002239kWi\u002B\u002BB3mIkNN5gVThUQH6d1\u002BfnhaRhA2xdON5CNLE=\u0022"},{"Name":"Last-Modified","Value":"Fri, 03 Oct 2025 18:24:53 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
   </ItemGroup>
 </Project>

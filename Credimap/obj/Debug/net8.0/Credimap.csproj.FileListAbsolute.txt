@@ -27,3 +27,4 @@ C:\Users\jm857368\Documents\credimap\Credimap\obj\Debug\net8.0\refint\Credimap.d
 C:\Users\jm857368\Documents\credimap\Credimap\obj\Debug\net8.0\Credimap.pdb
 C:\Users\jm857368\Documents\credimap\Credimap\obj\Debug\net8.0\Credimap.genruntimeconfig.cache
 C:\Users\jm857368\Documents\credimap\Credimap\obj\Debug\net8.0\ref\Credimap.dll
+C:\Users\jm857368\Documents\credimap\Credimap\obj\Debug\net8.0\Credimap.sourcelink.json

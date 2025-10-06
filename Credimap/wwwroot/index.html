@@ -11,6 +11,7 @@
 		html, body { height: 100%; margin: 0; }
 		#map { position: absolute; top: 0; bottom: 0; width: 100%; }
 		.popup-title { font-weight: 600; }
+		.popup-sub { color: #374151; font-size: 12px; margin-top: 2px; }
 		.notice { position: absolute; z-index: 10; top: 8px; left: 8px; background: rgba(0,0,0,.6); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 12px; }
 	</style>
 </head>
@@ -50,9 +51,10 @@
 					el.style.borderRadius = '50%';
 					el.style.background = '#1d4ed8';
 					el.style.boxShadow = '0 0 0 2px white';
+					const rubro = s.rubro && s.rubro.length ? `<div class="popup-sub">${s.rubro}</div>` : '';
 					const marker = new mapboxgl.Marker(el)
 						.setLngLat([s.lng, s.lat])
-						.setPopup(new mapboxgl.Popup({ offset: 24 }).setHTML(`<div class="popup-title">${s.nombre}</div>`))
+						.setPopup(new mapboxgl.Popup({ offset: 24 }).setHTML(`<div class=\"popup-title\">${s.nombre}</div>${rubro}`))
 						.addTo(map);
 					sucursalMarkers.push(marker);
 				});
