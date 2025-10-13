@@ -12,14 +12,54 @@
 		.popup-title { font-weight: 600; }
 		.popup-sub { color: #374151; font-size: 12px; margin-top: 2px; }
 		.notice { position: absolute; z-index: 10; top: 8px; left: 8px; background: rgba(0,0,0,.6); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 12px; }
+		#stats { position: absolute; z-index: 10; bottom: 8px; left: 8px; background: rgba(255,255,255,.9); color: #111; padding: 8px 12px; border-radius: 6px; font-size: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+		/* Panel de prueba */
+		#panel {
+			position: absolute; z-index: 10; top: 8px; right: 8px;
+			background: rgba(255,255,255,.95); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+			padding: 10px; width: 240px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+		}
+		#panel h3 { margin: 0 0 8px 0; font-size: 14px; }
+		#panel button { width: 100%; margin: 6px 0; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; background: #f9fafb; cursor: pointer; }
+		#panel button:hover { background: #f3f4f6; }
+		#panel small { display: block; color: #6b7280; margin-top: 8px; }
+		/* Selector de perfil */
+		#profileRow { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+		#profileSelect { flex: 1; padding: 6px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; font-size: 12px; }
+		/* Botón dentro del popup del marcador */
+		.popup-btn { margin-top: 8px; display: inline-block; padding: 6px 10px; font-size: 12px; border: 1px solid #e5e7eb; border-radius: 6px; background: #f9fafb; cursor: pointer; }
+		.popup-btn:active { transform: translateY(1px); }
+		.popup-btn-add { background: #f0f9ff; border-color: #3b82f6; color: #1e40af; }
+		.popup-btn-add:hover { background: #dbeafe; }
+		.popup-btn-remove { background: #fef2f2; border-color: #ef4444; color: #dc2626; }
+		.popup-btn-remove:hover { background: #fee2e2; }
 	</style>
 </head>
 <body>
 	<div id="map"></div>
 	<div id="notice" class="notice" style="display:none"></div>
+	<div id="stats" style="display:none">Ruta: <span id="statsText"></span></div>
+	<!-- Panel de prueba para manejar comercios y rutas -->
+	<div id="panel">
+		<h3>Panel de prueba</h3>
+		<div id="profileRow">
+			<label for="profileSelect" style="font-size:12px; color:#374151;">Perfil</label>
+			<select id="profileSelect">
+				<option value="mapbox/driving" selected>driving</option>
+				<option value="mapbox/driving-traffic">driving-traffic</option>
+				<option value="mapbox/walking">walking</option>
+				<option value="mapbox/cycling">cycling</option>
+			</select>
+		</div>
+		<button id="btnAdd">Agregar comercio de prueba</button>
+		<button id="btnRemoveFirst">Quitar primer comercio</button>
+		<button id="btnUpdate">Actualizar ruta</button>
+		<button id="btnClear">Limpiar todos los comercios</button>
+		<small>Puedes editar los valores de ejemplo en el código.</small>
+	</div>
 	<script>
 		// === Mapbox token (configurable) ===
-		mapboxgl.accessToken = 'pk.eyJ1IjoianVyZ2VubSIsImEiOiJjbWc5a3A0aDIwOTdwMmpxMXk5OXpqOGxhIn0.M9o_AhZuvPoniMEhYphhZg';
+		mapboxgl.accessToken = 'pk.eyJ1IjoianVyZ2VubSIsImEiOiJjbWdpNGlmYngwNW91Mm1vZTJycWF3cWxoIn0.gi0a-ubogX5-9IJni9E_wg';
 
 		const map = new mapboxgl.Map({
 			container: 'map',
@@ -28,75 +68,412 @@
 			zoom: 11
 		});
 
+		// Marcadores de sucursales/comercios (mismo orden que el array "comercios")
 		const sucursalMarkers = [];
 		const noticeEl = document.getElementById('notice');
+		const statsEl = document.getElementById('stats');
+		const statsTextEl = document.getElementById('statsText');
+		const profileSelectEl = document.getElementById('profileSelect');
+
 		function showNotice(msg) {
 			noticeEl.textContent = msg;
 			noticeEl.style.display = 'block';
 			setTimeout(() => noticeEl.style.display = 'none', 6000);
 		}
 
-		// Load sucursales markers
+		// === Comercios en orden (se llena desde /api/sucursales) ===
+		let comercios = [];
+		let sucursales = []; // Array de todas las sucursales cargadas
+		let routeProfile = profileSelectEl ? profileSelectEl.value : 'mapbox/driving';
+		if (profileSelectEl) {
+			profileSelectEl.addEventListener('change', () => { routeProfile = profileSelectEl.value; updateRoute(); });
+		}
+
+		// Validar coordenadas para Directions API
+		function isValidCoordinate(lng, lat) {
+			return typeof lng === 'number' && typeof lat === 'number' && 
+				   Number.isFinite(lng) && Number.isFinite(lat) && 
+				   Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+		}
+
+		// Verificar si un comercio ya existe en la ruta (por coordenadas)
+		function commerceExists(commerce) {
+			return comercios.some(c => 
+				c.lng === commerce.lng && c.lat === commerce.lat && c.nombre === commerce.nombre
+			);
+		}
+
+		// Limpiar línea de ruta del mapa
+		function clearRouteLine() {
+			const sourceId = 'route-source';
+			const layerId = 'route-layer';
+			if (map.getLayer(layerId)) map.removeLayer(layerId);
+			if (map.getSource(sourceId)) map.removeSource(sourceId);
+			statsEl.style.display = 'none';
+		}
+
+		// Crea o actualiza la capa de la ruta en el mapa
+		function renderRouteLine(geojsonLineString) {
+			const sourceId = 'route-source';
+			const layerId = 'route-layer';
+			if (map.getSource(sourceId)) { map.getSource(sourceId).setData(geojsonLineString); return; }
+			map.addSource(sourceId, { type: 'geojson', data: geojsonLineString });
+			map.addLayer({ id: layerId, type: 'line', source: sourceId, layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: { 'line-color': '#3b82f6', 'line-width': 5, 'line-opacity': 0.9 } });
+		}
+
+
+		// Llama a Mapbox Directions API para una ruta que conecta todos los puntos en orden
+		async function updateRoute() {
+			console.log('[updateRoute] Iniciando con comercios:', comercios.length);
+			
+			// 1) Validación robusta de puntos: filtrar solo coordenadas válidas
+			const validPoints = Array.isArray(comercios)
+				? comercios.filter(c => c && isValidCoordinate(c.lng, c.lat))
+				: [];
+			
+			console.log('[updateRoute] Puntos válidos después del filtro:', validPoints.length);
+			
+			// 2) Si hay ubicación del usuario, agregarla como punto de inicio
+			let coordsToUse = [...validPoints];
+			if (selfMarker && selfMarker.getLngLat) {
+				const userPos = selfMarker.getLngLat();
+				if (isValidCoordinate(userPos.lng, userPos.lat)) {
+					coordsToUse = [{ lng: userPos.lng, lat: userPos.lat }, ...validPoints];
+					console.log('[updateRoute] Incluyendo ubicación del usuario');
+				}
+			}
+
+			// 3) Verificar que tengamos al menos 2 puntos para Directions API
+			if (coordsToUse.length < 2) {
+				clearRouteLine();
+				if (coordsToUse.length === 0) {
+					showNotice('No hay comercios válidos para trazar la ruta.');
+				} else {
+					showNotice('Se necesita al menos 2 puntos para generar una ruta (1 comercio + tu ubicación).');
+				}
+				showDebug('');
+				return;
+			}
+
+			// Helper para solicitar una ruta (GET o POST según tamaño)
+			async function fetchRouteForCoords(coordPairs) {
+				const coords = coordPairs.map(c => `${c.lng},${c.lat}`).join(';');
+				const base = `https://api.mapbox.com/directions/v5/${routeProfile}/${coords}`;
+				const query = `geometries=geojson&overview=full&alternatives=false&access_token=${mapboxgl.accessToken}`;
+				const url = `${base}?${query}`;
+				// Si la URL se vuelve demasiado larga (~>8KB), usar POST
+				if (url.length > 8000) {
+					const postUrl = `https://api.mapbox.com/directions/v5/${routeProfile}`;
+					console.log('[Directions][POST] URL:', postUrl);
+					showDebug(`POST ${postUrl}\ncoords: ${coords}`);
+					const resp = await fetch(postUrl, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ coordinates: coordPairs.map(c => [c.lng, c.lat]), geometries: 'geojson', overview: 'full', alternatives: false, access_token: mapboxgl.accessToken })
+					});
+					console.log('[Directions] HTTP status:', resp.status);
+					return resp;
+				} else {
+					console.log('[Directions][GET] URL:', url.substring(0, 100) + '...');
+					return fetch(url);
+				}
+			}
+
+			try {
+				// 4) Soportar >25 puntos con chunking de 25, uniendo geometrías entre bloques
+				const MAX_WAYPOINTS = 25;
+				let totalDistance = 0;
+				let totalDuration = 0;
+				let mergedCoords = [];
+				let i = 0;
+				const lastIndex = coordsToUse.length - 1;
+				
+				console.log('[updateRoute] Procesando', coordsToUse.length, 'puntos con chunking de', MAX_WAYPOINTS);
+				
+				while (i < coordsToUse.length) {
+					let start = i;
+					let end = Math.min(i + MAX_WAYPOINTS - 1, lastIndex);
+					if (start > 0) start = start - 1; // incluir punto anterior para continuidad
+					const slice = coordsToUse.slice(start, end + 1);
+					
+					console.log(`[updateRoute] Chunk ${Math.floor(i/MAX_WAYPOINTS) + 1}: puntos ${start}-${end}`);
+					
+					const resp = await fetchRouteForCoords(slice);
+					let data;
+					try { 
+						data = await resp.json(); 
+					} catch (parseErr) { 
+						console.error('[updateRoute] Error parseando JSON:', parseErr);
+						data = null; 
+					}
+					
+					if (!resp.ok) {
+						const code = data && (data.code || data.message) || `HTTP ${resp.status}`;
+						console.error('[updateRoute] Error HTTP:', resp.status, code);
+						
+						if (resp.status === 422 || String(code).toLowerCase().includes('invalid')) {
+							showNotice('No se pudo calcular la ruta: coordenadas inválidas. Verifica que los puntos estén en tierra firme.');
+						} else {
+							showNotice(`Error de Directions API: ${code}`);
+						}
+						clearRouteLine();
+						return;
+					}
+					
+					if (!data || !Array.isArray(data.routes) || data.routes.length === 0) {
+						const code = data && (data.code || data.message) || 'No route found';
+						console.error('[updateRoute] No se encontró ruta:', code);
+						
+						showNotice(code.toLowerCase().includes('noroute') || code.toLowerCase().includes('no route')
+							? 'No se encontró una ruta entre los puntos. Verifica que los puntos estén conectados por carreteras.'
+							: `No se pudo calcular la ruta: ${code}`);
+						clearRouteLine();
+						return;
+					}
+					
+					const route = data.routes[0];
+					totalDistance += route.distance || 0;
+					totalDuration += route.duration || 0;
+					const coords = route.geometry && route.geometry.coordinates ? route.geometry.coordinates : [];
+					
+					if (mergedCoords.length === 0) {
+						mergedCoords = coords;
+					} else {
+						mergedCoords = mergedCoords.concat(coords.slice(1));
+					}
+					
+					i = end + 1;
+				}
+
+				// 5) Render final de la ruta
+				const line = { type: 'Feature', geometry: { type: 'LineString', coordinates: mergedCoords }, properties: {} };
+				renderRouteLine(line);
+				
+				const km = (totalDistance / 1000).toFixed(2);
+				const minutes = Math.round(totalDuration / 60);
+				statsTextEl.textContent = `${km} km • ${minutes} min (aprox)`;
+				statsEl.style.display = 'block';
+				
+				console.log('[updateRoute] Ruta completada:', km, 'km,', minutes, 'min');
+				
+			} catch (e) {
+				console.error('[updateRoute] Error crítico:', e);
+				showNotice('Error al consultar Directions API. Verifica tu conexión y token de Mapbox.');
+				clearRouteLine();
+			}
+		}
+
+		// Helpers para agregar/eliminar puntos y actualizar ruta
+		const defaultTestPoint = { nombre: 'Comercio Prueba', rubro: 'TEST', lat: -38.955, lng: -68.06 };
+
+		// Crear HTML del popup con botón dinámico según si ya está en la ruta
+		function createPopupHtml(c, btnId) {
+			const rubro = c.rubro && c.rubro.length ? `<div class=\"popup-sub\">${c.rubro}</div>` : '';
+			const isInRoute = commerceExists(c);
+			const botonTexto = isInRoute ? 'Quitar de la ruta' : 'Agregar a la ruta';
+			const botonClass = isInRoute ? 'popup-btn popup-btn-remove' : 'popup-btn popup-btn-add';
+			return `<div class=\"popup-title\">${c.nombre}</div>${rubro}<button id=\"${btnId}\" class=\"${botonClass}\">${botonTexto}</button>`;
+		}
+
+		// Actualizar popup existente con nuevo estado del botón
+		function updatePopupButton(marker, commerce) {
+			if (!marker || !marker.getPopup) return;
+			
+			const popup = marker.getPopup();
+			if (!popup) return;
+			
+			// Obtener el botón actual
+			const btnId = popup.getElement()?.querySelector('button')?.id;
+			if (!btnId) return;
+			
+			// Recrear el HTML con el estado actual
+			const newHtml = createPopupHtml(commerce, btnId);
+			popup.setHTML(newHtml);
+			
+			// Re-asignar el evento click
+			setTimeout(() => {
+				const btn = document.getElementById(btnId);
+				if (btn) {
+					btn.onclick = () => {
+						if (commerceExists(commerce)) {
+							removeCommerceFromRoute(commerce);
+						} else {
+							addCommerce(commerce);
+						}
+					};
+				}
+			}, 10);
+		}
+
+		function createMarkerForCommerce(c) {
+			const el = document.createElement('div');
+			el.style.width = '14px'; el.style.height = '14px'; el.style.borderRadius = '50%';
+			el.style.background = '#1d4ed8'; el.style.boxShadow = '0 0 0 2px white';
+			const btnId = `btn-${Math.random().toString(36).slice(2)}`;
+			const popup = new mapboxgl.Popup({ offset: 24 }).setHTML(createPopupHtml(c, btnId));
+			popup.on('open', () => {
+				const btn = document.getElementById(btnId);
+				if (btn) {
+					btn.onclick = () => {
+						if (commerceExists(c)) {
+							// Quitar de la ruta
+							removeCommerceFromRoute(c);
+						} else {
+							// Agregar a la ruta
+							addCommerce(c);
+						}
+					};
+				}
+			});
+			return new mapboxgl.Marker(el).setLngLat([c.lng, c.lat]).setPopup(popup).addTo(map);
+		}
+
+		// Agregar comercio a la ruta con validaciones robustas
+		function addCommerce(c) {
+			console.log('[addCommerce] Intentando agregar:', c);
+			
+			// Validar entrada
+			if (!c || !isValidCoordinate(c.lng, c.lat)) {
+				console.warn('[addCommerce] Coordenadas inválidas:', c);
+				showNotice('No se puede agregar: coordenadas inválidas.');
+				return false;
+			}
+			
+			// Verificar duplicados
+			if (commerceExists(c)) {
+				console.warn('[addCommerce] Ya existe en la ruta:', c.nombre);
+				showNotice(`${c.nombre} ya está en la ruta.`);
+				return false;
+			}
+			
+			// Agregar al array
+			comercios.push({ ...c });
+			console.log('[addCommerce] Agregado. Total comercios:', comercios.length);
+			
+			// Actualizar todos los popups para reflejar el nuevo estado
+			updateAllPopupButtons();
+			
+			// Actualizar ruta automáticamente
+			updateRoute();
+			return true;
+		}
+
+		// Quitar comercio de la ruta por coordenadas
+		function removeCommerceFromRoute(c) {
+			console.log('[removeCommerceFromRoute] Intentando quitar:', c);
+			
+			const index = comercios.findIndex(commerce => 
+				commerce.lng === c.lng && commerce.lat === c.lat && commerce.nombre === c.nombre
+			);
+			
+			if (index === -1) {
+				console.warn('[removeCommerceFromRoute] No encontrado en la ruta');
+				return false;
+			}
+			
+			comercios.splice(index, 1);
+			console.log('[removeCommerceFromRoute] Quitado. Total comercios:', comercios.length);
+			
+			// Actualizar todos los popups para reflejar el nuevo estado
+			updateAllPopupButtons();
+			
+			// Actualizar ruta automáticamente
+			updateRoute();
+			return true;
+		}
+
+		// Quitar comercio por índice (para panel de prueba)
+		function removeCommerceByIndex(index) {
+			if (index < 0 || index >= comercios.length) {
+				console.warn('[removeCommerceByIndex] Índice inválido:', index);
+				return false;
+			}
+			
+			const removed = comercios.splice(index, 1)[0];
+			console.log('[removeCommerceByIndex] Quitado:', removed.nombre);
+			
+			// Actualizar todos los popups para reflejar el nuevo estado
+			updateAllPopupButtons();
+			
+			// Actualizar ruta automáticamente
+			updateRoute();
+			return true;
+		}
+
+		// Limpiar todos los comercios
+		function clearAllCommerces() {
+			console.log('[clearAllCommerces] Limpiando', comercios.length, 'comercios');
+			comercios = [];
+			
+			// Actualizar todos los popups para reflejar el nuevo estado
+			updateAllPopupButtons();
+			
+			clearRouteLine();
+		}
+
+		// Actualizar todos los popups para reflejar el estado actual de la ruta
+		function updateAllPopupButtons() {
+			// Buscar todos los marcadores de comercios y actualizar sus popups
+			sucursalMarkers.forEach(marker => {
+				if (marker && marker.getLngLat) {
+					const lngLat = marker.getLngLat();
+					// Buscar el comercio correspondiente por coordenadas
+					const commerce = sucursales.find(s => 
+						Math.abs(s.lng - lngLat.lng) < 0.0001 && 
+						Math.abs(s.lat - lngLat.lat) < 0.0001
+					);
+					if (commerce) {
+						updatePopupButton(marker, commerce);
+					}
+				}
+			});
+		}
+
+		// Exponer funciones para pruebas en consola
+		window.addCommerce = addCommerce;
+		window.removeCommerceByIndex = removeCommerceByIndex;
+		window.removeCommerceFromRoute = removeCommerceFromRoute;
+		window.updateRoute = updateRoute;
+		window.clearAllCommerces = clearAllCommerces;
+		window.comercios = () => comercios; // Para inspeccionar el array
+
+		// Wire de botones del panel
+		document.getElementById('btnAdd').addEventListener('click', () => addCommerce({ ...defaultTestPoint }));
+		document.getElementById('btnRemoveFirst').addEventListener('click', () => removeCommerceByIndex(0));
+		document.getElementById('btnUpdate').addEventListener('click', () => updateRoute());
+		document.getElementById('btnClear').addEventListener('click', () => clearAllCommerces());
+
+		// Inicialización: asegurar que el mapa empiece limpio
+		console.log('[Inicialización] Mapa iniciado sin rutas');
+		clearRouteLine();
+
+		// Carga inicial de sucursales desde backend
 		fetch('/api/sucursales')
 			.then(r => r.json())
 			.then(data => {
-				(data || []).forEach(s => {
-					const el = document.createElement('div');
-					el.style.width = '14px';
-					el.style.height = '14px';
-					el.style.borderRadius = '50%';
-					el.style.background = '#1d4ed8';
-					el.style.boxShadow = '0 0 0 2px white';
-					const rubro = s.rubro && s.rubro.length ? `<div class="popup-sub">${s.rubro}</div>` : '';
-					const marker = new mapboxgl.Marker(el)
-						.setLngLat([s.lng, s.lat])
-						.setPopup(new mapboxgl.Popup({ offset: 24 }).setHTML(`<div class=\"popup-title\">${s.nombre}</div>${rubro}`))
-						.addTo(map);
-					sucursalMarkers.push(marker);
+				// NO asignar a comercios aquí - solo cargar los marcadores
+				sucursales = data || [];
+				sucursales.forEach(s => { 
+					sucursalMarkers.push(createMarkerForCommerce({ nombre: s.nombre, rubro: s.rubro, lat: s.lat, lng: s.lng })); 
 				});
+				console.log('[Carga inicial] Marcadores cargados:', sucursalMarkers.length);
+				// NO llamar updateRoute() aquí - el mapa debe empezar limpio
 			})
 			.catch(() => showNotice('No se pudo cargar /api/sucursales'));
 
 		// Geolocalización del promotor (cliente)
-		let selfMarker = null;
-		let lastUpdateTs = 0;
-		const MIN_UPDATE_MS = 2000; // throttle updates
-
-		function upsertSelfMarker(lng, lat) {
-			if (!selfMarker) {
-				const el = document.createElement('div');
-				el.style.width = '16px';
-				el.style.height = '16px';
-				el.style.borderRadius = '50%';
-				el.style.background = '#10b981'; // verde: ubicación propia
-				el.style.boxShadow = '0 0 0 2px white';
-				selfMarker = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map);
-			} else {
-				selfMarker.setLngLat([lng, lat]);
-			}
-		}
-
+		let selfMarker = null; let lastUpdateTs = 0; const MIN_UPDATE_MS = 2000; // throttle updates
+		function upsertSelfMarker(lng, lat) { if (!selfMarker) { const el = document.createElement('div'); el.style.width = '16px'; el.style.height = '16px'; el.style.borderRadius = '50%'; el.style.background = '#10b981'; el.style.boxShadow = '0 0 0 2px white'; selfMarker = new mapboxgl.Marker(el).setLngLat([lng, lat]).addTo(map); } else { selfMarker.setLngLat([lng, lat]); } }
 		if (navigator.geolocation) {
-			navigator.geolocation.watchPosition(position => {
-				const now = Date.now();
-				if (now - lastUpdateTs < MIN_UPDATE_MS) return;
-				lastUpdateTs = now;
-				const { latitude, longitude } = position.coords;
-				upsertSelfMarker(longitude, latitude);
-			}, error => {
-				if (error.code === error.PERMISSION_DENIED) {
-					showNotice('Necesitamos permiso de geolocalización para mostrar tu ubicación.');
-				} else if (error.code === error.POSITION_UNAVAILABLE) {
-					showNotice('Ubicación no disponible. Verifica tu GPS/servicios de ubicación.');
-				} else if (error.code === error.TIMEOUT) {
-					showNotice('Tiempo de espera agotado al obtener ubicación.');
-				} else {
-					showNotice('Error de geolocalización.');
-				}
-			}, { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 });
-		} else {
-			showNotice('Geolocalización no soportada por este navegador.');
-		}
+			navigator.geolocation.watchPosition(position => { const now = Date.now(); if (now - lastUpdateTs < MIN_UPDATE_MS) return; lastUpdateTs = now; const { latitude, longitude } = position.coords; upsertSelfMarker(longitude, latitude); }, error => { if (error.code === error.PERMISSION_DENIED) showNotice('Necesitamos permiso de geolocalización para mostrar tu ubicación.'); else if (error.code === error.POSITION_UNAVAILABLE) showNotice('Ubicación no disponible. Verifica tu GPS/servicios de ubicación.'); else if (error.code === error.TIMEOUT) showNotice('Tiempo de espera agotado al obtener ubicación.'); else showNotice('Error de geolocalización.'); }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 });
+		} else { showNotice('Geolocalización no soportada por este navegador.'); }
+
+		/*
+		Cómo cambiar el texto del botón del popup o los valores agregados:
+		- Editá la constante "botonTexto" dentro de createPopupHtml(...) para el texto del botón.
+		- El comercio agregado usa el objeto "c" que se pasa a addCommerce({ ...c }).
+		  Si querés transformar los datos, hacelo ahí (por ejemplo, normalizar nombre/rubro).
+		*/
 	</script>
 </body>
 </html> 
